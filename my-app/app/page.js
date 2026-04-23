@@ -1,65 +1,145 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import LoginPage from '../components/LoginPage';
+import RoomSearch from '../components/RoomSearch';
+import BookingForm from '../components/BookingForm';
+import GuestBookings from '../components/GuestBookings';
+import RoomManagement from '../components/RoomManagement';
+import ReceptionistDashboard from '../components/ReceptionistDashboard';
+import CheckInOut from '../components/CheckInOut';
+import HousekeepingManagement from '../components/HousekeepingManagement';
+import PaymentSystem from '../components/PaymentSystem';
+import NotificationCenter from '../components/NotificationCenter';
+import ManagerDashboard from '../components/ManagerDashboard';
+import InvoiceGenerator from '../components/InvoiceGenerator';
+import { useAuth } from '../lib/context/AuthContext';
+import { USER_ROLE } from '../lib/models/User';
 
 export default function Home() {
+  const { user, logout, hasRole } = useAuth();
+  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [selectedRoom, setSelectedRoom] = useState(null);
+
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'search':
+        return <RoomSearch onBook={setSelectedRoom} />;
+      case 'my-bookings':
+        return <GuestBookings />;
+      case 'rooms':
+        return <RoomManagement />;
+      case 'reception':
+        return <ReceptionistDashboard />;
+      case 'checkin':
+        return <CheckInOut />;
+      case 'housekeeping':
+        return <HousekeepingManagement />;
+      case 'payment':
+        return <PaymentSystem />;
+      case 'manager':
+        return <ManagerDashboard />;
+      case 'invoices':
+        return <InvoiceGenerator />;
+      default:
+        if (hasRole('guest')) {
+          return <RoomSearch onBook={setSelectedRoom} />;
+        } else if (hasRole('receptionist')) {
+          return <ReceptionistDashboard />;
+        } else if (hasRole('housekeeper')) {
+          return <HousekeepingManagement />;
+        } else if (hasRole('manager')) {
+          return <ManagerDashboard />;
+        }
+    }
+  };
+
+  const getNavItems = () => {
+    const items = [];
+    
+    if (hasRole('guest')) {
+      items.push({ id: 'search', label: 'Search Rooms' });
+      items.push({ id: 'my-bookings', label: 'My Bookings' });
+    }
+    
+    if (hasRole('receptionist') || hasRole('manager')) {
+      items.push({ id: 'reception', label: 'Dashboard' });
+      items.push({ id: 'checkin', label: 'Check-in/Out' });
+      items.push({ id: 'rooms', label: 'Room Management' });
+      items.push({ id: 'payment', label: 'Payments' });
+      items.push({ id: 'invoices', label: 'Invoices' });
+    }
+    
+    if (hasRole('housekeeper') || hasRole('manager') || hasRole('receptionist')) {
+      items.push({ id: 'housekeeping', label: 'Housekeeping' });
+    }
+    
+    if (hasRole('manager')) {
+      items.push({ id: 'manager', label: 'Manager Dashboard' });
+    }
+    
+    return items;
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gray-100">
+      <nav className="bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold text-gray-800">Hotel Management</h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:flex space-x-4">
+                {getNavItems().map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => setCurrentPage(item.id)}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentPage === item.id
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              
+              <NotificationCenter />
+              
+              <div className="flex items-center space-x-3 border-l pl-4">
+                <span className="text-sm text-gray-700">{user.name}</span>
+                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                  {user.role}
+                </span>
+                <button
+                  onClick={logout}
+                  className="text-sm text-red-600 hover:text-red-800"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto py-6 px-4">
+        {renderPage()}
       </main>
+
+      {selectedRoom && (
+        <BookingForm
+          room={selectedRoom}
+          onClose={() => setSelectedRoom(null)}
+        />
+      )}
     </div>
   );
 }
