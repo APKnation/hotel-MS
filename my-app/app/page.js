@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import LandingPage from '../components/LandingPage';
 import LoginPage from '../components/LoginPage';
 import RoomSearch from '../components/RoomSearch';
 import BookingForm from '../components/BookingForm';
@@ -20,6 +21,11 @@ export default function Home() {
   const { user, logout, hasRole } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [showLanding, setShowLanding] = useState(true);
+
+  if (showLanding && !user) {
+    return <LandingPage />;
+  }
 
   if (!user) {
     return <LoginPage />;
